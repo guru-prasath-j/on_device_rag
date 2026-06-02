@@ -1,72 +1,261 @@
 # on_device_rag
 
-A lightweight, **pure-Dart** retrieval-augmented-generation (RAG) engine that runs entirely on-device — no servers, no native dependencies, works on every Flutter and Dart platform (Android, iOS, web, desktop).
+**Ask questions about any text — and get answers grounded in that text — entirely on your device, with no internet connection required.**
 
-It gives you the four building blocks of RAG out of the box and lets you swap any of them for your own implementation:
+It works by breaking your content into small pieces, finding the most relevant ones for each question, and feeding them to your AI model to generate a focused, accurate answer.
 
-- **Chunking** — split long text into overlapping, retrieval-friendly pieces.
-- **Embeddings** — turn text into vectors. Ships with a zero-dependency `HashingEmbeddingModel`; plug in your own model via the `EmbeddingModel` interface.
-- **Vector store** — index and similarity-search those vectors. Ships with `InMemoryVectorStore` (brute-force cosine, JSON-persistable).
-- **Generation** — produce a grounded answer with any `LanguageModel` you supply (an on-device LLM such as `flutter_gemma`, or a remote API).
+[![pub.dev](https://img.shields.io/pub/v/on_device_rag.svg)](https://pub.dev/packages/on_device_rag)
+[![CI](https://github.com/guru-prasath-j/on_device_rag/actions/workflows/ci.yml/badge.svg)](https://github.com/guru-prasath-j/on_device_rag/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## Why on-device?
+---
 
-Keeping retrieval and embeddings on the device means user data never leaves the phone, the app works offline, and there are no per-query API costs. You only need a network call if you choose a remote `LanguageModel`.
+## What it does
 
-## Install
+You give it text (a document, notes, a book chapter — anything). It splits it into chunks, creates a searchable index, and lets you query it. When you ask a question, it finds the most relevant chunks and builds a prompt that gives your LLM just the right context to answer accurately — no hallucination, no guesswork.
+
+Everything runs locally. No API calls. No data leaves the device.
+
+---
+
+## Features
+
+- **Zero dependencies** — pure Dart, works on every Flutter and Dart platform (mobile, desktop, web, CLI)
+- **Plug in any LLM** — bring your own language model via a simple interface
+- **Smart chunking** — splits text with configurable size and overlap to preserve context
+- **Vector similarity search** — cosine similarity over in-memory embeddings
+- **Fully offline** — no network calls, no API keys needed for the core engine
+- **Swappable everything** — embedding model, vector store, and LLM are all interfaces you can replace
+
+---
+
+## Installation
+
+Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
   on_device_rag: ^0.1.0
 ```
 
+Then run:
+
+```bash
+dart pub get
+```
+
+---
+
 ## Quick start
 
 ```dart
 import 'package:on_device_rag/on_device_rag.dart';
 
+// 1. Implement LanguageModel with your LLM of choice
+class MyLLM implements LanguageModel {
+  @override
+  Stream<String> generate(String prompt) async* {
+    // Call your local model here — Ollama, llama.cpp, on-device model, etc.
+    yield 'Answer based on the provided context.';
+  }
+}
+
+void main() async {
+  final engine = RagEngine(llm: MyLLM());
+
+  // 2. Index your content
+  await engine.addDocument(
+    id: 'doc1',
+    text: 'Flutter is an open-source UI toolkit by Google. '
+          'It lets you build natively compiled apps for mobile, '
+          'web, and desktop from a single codebase using Dart.',
+  );
+
+  // 3. Ask questions
+  final result = await engine.query('What is Flutter?');
+  print(result.answer);
+  // -> Answer grounded in the text you provided
+}
+```
+
+---
+
+## Examples
+
+### Basic usage
+
+```dart
+final engine = RagEngine(llm: MyLLM());
+
+await engine.addDocument(id: 'notes', text: yourTextHere);
+
+final result = await engine.query('Summarise the key points');
+print(result.answer);
+print('Sources used: ${result.sources}');
+```
+
+### Multiple documents
+
+```dart
+final engine = RagEngine(llm: MyLLM());
+
+await engine.addDocument(id: 'chapter1', text: chapter1Text);
+await engine.addDocument(id: 'chapter2', text: chapter2Text);
+await engine.addDocument(id: 'chapter3', text: chapter3Text);
+
+// Queries search across all documents automatically
+final result = await engine.query('What happens in chapter 2?');
+```
+
+### Streaming answers
+
+```dart
+final engine = RagEngine(llm: MyLLM());
+await engine.addDocument(id: 'doc1', text: content);
+
+// Stream tokens as they arrive — great for chat UIs
+await for (final token in engine.queryStream('Explain the main idea')) {
+  stdout.write(token); // Print each token as it streams in
+}
+```
+
+### Custom chunk size
+
+```dart
 final engine = RagEngine(
-  embeddingModel: HashingEmbeddingModel(dimensions: 256),
-  vectorStore: InMemoryVectorStore(),
-  // languageModel: MyGemmaModel(), // optional — needed only for ask()
+  llm: MyLLM(),
+  chunkSize: 300,    // smaller chunks = more precise retrieval
+  chunkOverlap: 50,  // overlap preserves context across boundaries
+  topK: 3,           // how many chunks to include in the prompt
 );
-
-// Index knowledge (long text is chunked automatically).
-await engine.index('Flutter is a UI toolkit by Google. Dart is its language.');
-
-// Retrieve relevant context (no LLM required).
-final hits = await engine.retrieve('What language does Flutter use?', topK: 2);
-
-// Or, with a LanguageModel, get a grounded streamed answer:
-// final result = await engine.ask('What language does Flutter use?');
-// await for (final token in result.answer) stdout.write(token);
 ```
 
-## Plugging in your own pieces
-
-Every part is an interface:
+### Bring your own embedding model
 
 ```dart
-class MyEmbedder implements EmbeddingModel { /* ... */ }
-class MyStore    implements VectorStore    { /* ... */ }
-class MyLlm      implements LanguageModel  { /* ... */ }
+class MyEmbeddingModel implements EmbeddingModel {
+  @override
+  Future<List<double>> embed(String text) async {
+    // Use any embedding model — TFLite, ONNX, API, etc.
+    return myModel.getEmbedding(text);
+  }
+}
+
+final engine = RagEngine(
+  llm: MyLLM(),
+  embeddingModel: MyEmbeddingModel(),
+);
 ```
 
-Pass them to `RagEngine` and the orchestration stays the same.
-
-## Persistence
-
-`InMemoryVectorStore` serialises to JSON so you can save the index anywhere:
+### Bring your own vector store
 
 ```dart
-final json = store.toJson();          // write to a file / prefs / db
-final restored = InMemoryVectorStore.fromJson(json);
+class PersistentVectorStore implements VectorStore {
+  // Implement with SQLite, Hive, or any local DB
+  // to persist your index across app restarts
+}
+
+final engine = RagEngine(
+  llm: MyLLM(),
+  vectorStore: PersistentVectorStore(),
+);
 ```
+
+### Use in a Flutter widget
+
+```dart
+class StudyAssistant extends StatefulWidget {
+  const StudyAssistant({super.key});
+  @override
+  State<StudyAssistant> createState() => _StudyAssistantState();
+}
+
+class _StudyAssistantState extends State<StudyAssistant> {
+  final _engine = RagEngine(llm: MyLLM());
+  String _answer = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _engine.addDocument(id: 'notes', text: myStudyNotes);
+  }
+
+  Future<void> _ask(String question) async {
+    final result = await _engine.query(question);
+    setState(() => _answer = result.answer);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        TextField(onSubmitted: _ask, decoration: const InputDecoration(labelText: 'Ask a question')),
+        Text(_answer),
+      ],
+    );
+  }
+}
+```
+
+---
 
 ## How it works
 
-`index()` cleans and chunks text, embeds each chunk, and adds the embedded chunks to the store. `ask()` embeds the question, runs a cosine-similarity search for the top-K chunks, builds a grounded prompt (answer **only** from the supplied context), and streams the answer from your `LanguageModel`. The default `HashingEmbeddingModel` uses the feature-hashing ("hashing trick") of word and character tri-gram features, so it needs no model file and is fully deterministic — great for tests and small corpora. For higher semantic quality, plug in a real embedding model behind the same interface.
+```
+Your text
+   |
+   v
+TextChunker  ──►  splits into overlapping chunks (e.g. 500 chars, 50 overlap)
+   |
+   v
+EmbeddingModel  ──►  converts each chunk into a list of numbers (a vector)
+   |
+   v
+VectorStore  ──►  stores all vectors in memory (or your custom store)
+
+── Query time ──
+
+Your question
+   |
+   v
+EmbeddingModel  ──►  embed the question
+   |
+   v
+VectorStore.search()  ──►  find the top-K most similar chunks (cosine similarity)
+   |
+   v
+PromptBuilder  ──►  wrap chunks + question into a structured prompt
+   |
+   v
+LanguageModel  ──►  stream the final answer
+```
+
+---
+
+## API reference
+
+| Class | Description |
+|-------|-------------|
+| `RagEngine` | Main entry point. Call `addDocument()`, `query()`, `queryStream()` |
+| `LanguageModel` | Interface — implement this with your LLM |
+| `EmbeddingModel` | Interface — implement for custom embeddings |
+| `HashingEmbeddingModel` | Default embedding model, zero dependencies |
+| `VectorStore` | Interface — implement for custom/persistent storage |
+| `InMemoryVectorStore` | Default in-memory vector store |
+| `TextChunker` | Splits text into overlapping chunks |
+| `RagDocument` | Model representing a stored document chunk |
+| `RagResult` | Result of a query: `answer`, `sources`, `prompt` |
+| `PromptBuilder` | Assembles the grounded prompt sent to the LLM |
+| `VectorMath` | Cosine similarity and vector normalization utilities |
+
+---
+
+## Contributing
+
+Contributions are welcome. Please open an issue first to discuss what you'd like to change.
+
+---
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE)
