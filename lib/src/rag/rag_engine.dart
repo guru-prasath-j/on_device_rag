@@ -153,7 +153,7 @@ class RagEngine {
     if (minScore != null) {
       scored = [
         for (final s in scored)
-          if (s.score >= minScore) s
+          if (s.score >= minScore) s,
       ];
     }
     if (diversity > 0 && scored.length > 1) {

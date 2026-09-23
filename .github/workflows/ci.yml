@@ -49,11 +49,17 @@ jobs:
 
       - name: Run tests (VM)
         if: always()
-        run: dart test --reporter=github
+        run: |
+          set +e
+          dart test --reporter=json > test-results.jsonl
+          python3 .github/report_tests.py test-results.jsonl
 
       - name: Run tests (web)
         if: always()
-        run: dart test --platform=chrome --reporter=github
+        run: |
+          set +e
+          dart test --platform=chrome --reporter=json > test-results-web.jsonl
+          python3 .github/report_tests.py test-results-web.jsonl
 
       - name: Run examples
         if: always()

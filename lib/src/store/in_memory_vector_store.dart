@@ -25,7 +25,8 @@ class InMemoryVectorStore implements VectorStore {
     for (final e in docs) {
       store._insert(
         RagDocument.fromJson(
-            (e! as Map<Object?, Object?>).cast<String, Object?>()),
+          (e! as Map<Object?, Object?>).cast<String, Object?>(),
+        ),
       );
     }
     return store;

@@ -47,8 +47,12 @@ void main() {
         [0, 1],
       );
       expect(
-        VectorMath.maximalMarginalRelevance(query, candidates,
-            k: 2, lambda: 0.3),
+        VectorMath.maximalMarginalRelevance(
+          query,
+          candidates,
+          k: 2,
+          lambda: 0.3,
+        ),
         [0, 2],
       );
     });
@@ -240,7 +244,9 @@ void main() {
       expect(answer.answer, 'ANSWER');
       expect(answer.sourceDocumentIds, ['dart']);
       expect(
-          await engine.queryStream('Who makes Dart?').toList(), ['ANS', 'WER']);
+        await engine.queryStream('Who makes Dart?').toList(),
+        ['ANS', 'WER'],
+      );
     });
 
     test('addDocument replaces and removeDocument deletes', () async {
