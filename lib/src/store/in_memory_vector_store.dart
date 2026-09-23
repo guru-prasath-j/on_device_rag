@@ -24,7 +24,8 @@ class InMemoryVectorStore implements VectorStore {
     final docs = (json['documents'] as List<Object?>?) ?? const [];
     for (final e in docs) {
       store._insert(
-        RagDocument.fromJson((e! as Map<Object?, Object?>).cast<String, Object?>()),
+        RagDocument.fromJson(
+            (e! as Map<Object?, Object?>).cast<String, Object?>()),
       );
     }
     return store;
@@ -74,9 +75,7 @@ class InMemoryVectorStore implements VectorStore {
       scored.add(ScoredDocument(document: d, score: score));
     }
     scored.sort((a, b) => b.score.compareTo(a.score));
-    return scored.length <= topK
-        ? scored
-        : scored.sublist(0, topK);
+    return scored.length <= topK ? scored : scored.sublist(0, topK);
   }
 
   @override

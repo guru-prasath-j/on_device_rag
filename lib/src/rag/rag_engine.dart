@@ -151,7 +151,10 @@ class RagEngine {
     final fetch = diversity > 0 ? k * 4 : k;
     var scored = await vectorStore.search(queryVec, topK: fetch, where: where);
     if (minScore != null) {
-      scored = [for (final s in scored) if (s.score >= minScore) s];
+      scored = [
+        for (final s in scored)
+          if (s.score >= minScore) s
+      ];
     }
     if (diversity > 0 && scored.length > 1) {
       final order = VectorMath.maximalMarginalRelevance(

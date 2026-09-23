@@ -53,8 +53,9 @@ class RagDocument {
     return RagDocument(
       id: json['id'] as String?,
       text: json['text'] as String? ?? '',
-      embedding:
-          rawEmbedding?.map((e) => (e as num).toDouble()).toList(growable: false),
+      embedding: rawEmbedding
+          ?.map((e) => (e as num).toDouble())
+          .toList(growable: false),
       metadata: (json['metadata'] as Map?)?.cast<String, Object?>() ?? const {},
     );
   }

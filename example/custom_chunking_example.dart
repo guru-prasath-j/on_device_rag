@@ -17,7 +17,8 @@ Future<void> main() async {
     chunker: const TextChunker(chunkSize: 200, overlap: 40),
     // Keep prompts short for small on-device context windows and label each
     // chunk with its source.
-    promptBuilder: const PromptBuilder(maxContextChars: 1200, sourceKey: 'source'),
+    promptBuilder:
+        const PromptBuilder(maxContextChars: 1200, sourceKey: 'source'),
     topK: 5,
   );
 

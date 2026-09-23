@@ -47,7 +47,8 @@ void main() {
         [0, 1],
       );
       expect(
-        VectorMath.maximalMarginalRelevance(query, candidates, k: 2, lambda: 0.3),
+        VectorMath.maximalMarginalRelevance(query, candidates,
+            k: 2, lambda: 0.3),
         [0, 2],
       );
     });
@@ -81,7 +82,8 @@ void main() {
       expect(seen, containsAll(words));
     });
     test('prefers sentence boundaries', () {
-      const text = 'The first sentence is here. The second sentence follows it. '
+      const text =
+          'The first sentence is here. The second sentence follows it. '
           'A third one ends the paragraph.';
       final chunks = const TextChunker(chunkSize: 70, overlap: 0).chunk(text);
       expect(chunks.first, endsWith('.'));
@@ -151,7 +153,8 @@ void main() {
 
     test('round-trips through JSON', () async {
       final store = await storeOf({'a1': 'alpha'});
-      final json = jsonDecode(jsonEncode(store.toJson())) as Map<String, Object?>;
+      final json =
+          jsonDecode(jsonEncode(store.toJson())) as Map<String, Object?>;
       final restored = InMemoryVectorStore.fromJson(json);
       expect(await restored.length, 1);
       expect(restored.documents.single.metadata['group'], 'a');
@@ -236,11 +239,13 @@ void main() {
       final answer = await engine.query('Who makes Dart?');
       expect(answer.answer, 'ANSWER');
       expect(answer.sourceDocumentIds, ['dart']);
-      expect(await engine.queryStream('Who makes Dart?').toList(), ['ANS', 'WER']);
+      expect(
+          await engine.queryStream('Who makes Dart?').toList(), ['ANS', 'WER']);
     });
 
     test('addDocument replaces and removeDocument deletes', () async {
-      final engine = RagEngine(chunker: const TextChunker(chunkSize: 40, overlap: 0));
+      final engine =
+          RagEngine(chunker: const TextChunker(chunkSize: 40, overlap: 0));
       await engine.addDocument(id: 'doc', text: 'x ' * 100);
       await engine.addDocument(id: 'doc', text: 'short replacement');
       expect(await engine.vectorStore.length, 1);

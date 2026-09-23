@@ -49,9 +49,8 @@ class TextChunker {
     final chunks = <String>[];
     var start = 0;
     while (start < clean.length) {
-      var end = start + chunkSize < clean.length
-          ? start + chunkSize
-          : clean.length;
+      var end =
+          start + chunkSize < clean.length ? start + chunkSize : clean.length;
       if (splitOnBoundaries && end < clean.length) {
         end = _boundaryBefore(clean, start, end);
       }

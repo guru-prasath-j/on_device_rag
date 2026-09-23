@@ -58,7 +58,8 @@ Answer:''';
       parts.add(entry);
       used += entry.length;
     }
-    final ctx = parts.isEmpty ? 'No relevant context found.' : parts.join('\n\n');
+    final ctx =
+        parts.isEmpty ? 'No relevant context found.' : parts.join('\n\n');
     return template
         .replaceAll('{context}', ctx)
         .replaceAll('{question}', question);

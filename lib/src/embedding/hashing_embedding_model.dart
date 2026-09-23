@@ -42,7 +42,8 @@ class HashingEmbeddingModel extends EmbeddingModel {
   /// Weight of each character n-gram relative to a whole word.
   final double ngramWeight;
 
-  static final RegExp _separators = RegExp(r'[^\p{L}\p{N}\p{M}]+', unicode: true);
+  static final RegExp _separators =
+      RegExp(r'[^\p{L}\p{N}\p{M}]+', unicode: true);
 
   @override
   Future<List<double>> embed(String text) async => embedSync(text);
@@ -67,11 +68,8 @@ class HashingEmbeddingModel extends EmbeddingModel {
 
   /// Splits [text] into lower-cased word tokens on any non-letter, non-digit
   /// character.
-  static List<String> tokenize(String text) => text
-      .toLowerCase()
-      .split(_separators)
-      .where((t) => t.isNotEmpty)
-      .toList();
+  static List<String> tokenize(String text) =>
+      text.toLowerCase().split(_separators).where((t) => t.isNotEmpty).toList();
 
   Iterable<String> _charNGrams(String s, int n) sync* {
     final runes = s.runes.toList();
