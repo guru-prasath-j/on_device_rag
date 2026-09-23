@@ -49,4 +49,43 @@ class VectorMath {
     if (denom == 0) return 0;
     return dotProduct(a, b) / denom;
   }
+
+  /// Selects [k] items by Maximal Marginal Relevance.
+  ///
+  /// Balances relevance to [query] against diversity among the chosen items:
+  /// [lambda] `1.0` ranks purely by relevance, `0.0` purely by novelty. Useful
+  /// when a corpus has many near-duplicate chunks. Returns indices into
+  /// [candidates], in selection order.
+  static List<int> maximalMarginalRelevance(
+    List<double> query,
+    List<List<double>> candidates, {
+    required int k,
+    double lambda = 0.5,
+  }) {
+    if (lambda < 0 || lambda > 1) {
+      throw ArgumentError.value(lambda, 'lambda', 'must be in [0, 1]');
+    }
+    final relevance = [for (final c in candidates) cosineSimilarity(query, c)];
+    final selected = <int>[];
+    final remaining = List<int>.generate(candidates.length, (i) => i);
+    while (selected.length < k && remaining.isNotEmpty) {
+      var best = remaining.first;
+      var bestScore = double.negativeInfinity;
+      for (final i in remaining) {
+        var redundancy = 0.0;
+        for (final j in selected) {
+          final sim = cosineSimilarity(candidates[i], candidates[j]);
+          if (sim > redundancy) redundancy = sim;
+        }
+        final score = lambda * relevance[i] - (1 - lambda) * redundancy;
+        if (score > bestScore) {
+          bestScore = score;
+          best = i;
+        }
+      }
+      selected.add(best);
+      remaining.remove(best);
+    }
+    return selected;
+  }
 }

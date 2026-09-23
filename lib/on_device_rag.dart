@@ -6,7 +6,7 @@
 /// your own embedding model, vector store or language model. The default
 /// [HashingEmbeddingModel] has zero native dependencies, so the package works
 /// on every Flutter and Dart platform.
-library on_device_rag;
+library;
 
 export 'src/chunking/text_chunker.dart';
 export 'src/embedding/embedding_model.dart';

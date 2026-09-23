@@ -1,9 +1,7 @@
 name: on_device_rag
-description: >-
-  A lightweight, pure-Dart on-device Retrieval-Augmented Generation (RAG)
-  engine for Flutter and Dart: chunk text, embed it, run vector similarity
-  search, and build grounded prompts — fully offline, bring your own LLM.
-version: 0.1.0
+description: Pure-Dart on-device RAG for Flutter and Dart. Chunk text, embed it, search vectors and build grounded LLM prompts, fully offline. Bring your own LLM.
+version: 0.2.0
+homepage: https://github.com/guru-prasath-j/on_device_rag
 repository: https://github.com/guru-prasath-j/on_device_rag
 issue_tracker: https://github.com/guru-prasath-j/on_device_rag/issues
 topics:
