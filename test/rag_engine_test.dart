@@ -101,6 +101,63 @@ void main() {
       ).chunk(text);
       expect(chunks.map((c) => c.length), [100, 100, 50]);
     });
+    test('preserveParagraphs packs whole paragraphs', () {
+      const text =
+          '# Title\n\nFirst   paragraph here.\n\nSecond paragraph.\n  \n'
+          'Third one is a little longer than that.';
+      final chunks = const TextChunker(
+        chunkSize: 50,
+        overlap: 0,
+        preserveParagraphs: true,
+      ).chunk(text);
+      expect(chunks, [
+        '# Title\n\nFirst paragraph here.\n\nSecond paragraph.',
+        'Third one is a little longer than that.',
+      ]);
+    });
+    test('preserveParagraphs splits oversized paragraphs', () {
+      final long = List.generate(40, (i) => 'w$i').join(' ');
+      final chunks = const TextChunker(
+        chunkSize: 40,
+        overlap: 0,
+        preserveParagraphs: true,
+      ).chunk('Intro.\n\n$long\n\nOutro.');
+      expect(chunks.first, 'Intro.');
+      expect(chunks.last, 'Outro.');
+      expect(chunks.length, greaterThan(3));
+      expect(chunks.every((c) => c.length <= 40), isTrue);
+    });
+    test('preserveParagraphs ignores blank input', () {
+      expect(
+        const TextChunker(preserveParagraphs: true).chunk(' \n\n '),
+        isEmpty,
+      );
+    });
+  });
+
+  group('FunctionLanguageModel', () {
+    test('streams from a function', () async {
+      final model = FunctionLanguageModel(
+        (prompt) => Stream.fromIterable(['a', 'b']),
+      );
+      expect(await model.generate('q').join(), 'ab');
+    });
+    test('fromFuture powers the engine', () async {
+      String? seen;
+      final engine = RagEngine(
+        languageModel: FunctionLanguageModel.fromFuture((prompt) async {
+          seen = prompt;
+          return 'Paris';
+        }),
+      );
+      await engine.addDocument(
+        id: 'fr',
+        text: 'Paris is the capital of France.',
+      );
+      final answer = await engine.query('What is the capital of France?');
+      expect(answer.answer, 'Paris');
+      expect(seen, contains('capital of France'));
+    });
   });
 
   group('HashingEmbeddingModel', () {

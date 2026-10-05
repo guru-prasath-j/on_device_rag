@@ -1,6 +1,6 @@
 name: on_device_rag
-description: Pure-Dart on-device RAG for Flutter and Dart. Chunk text, embed it, search vectors and build grounded LLM prompts, fully offline. Bring your own LLM.
-version: 0.2.0
+description: Pure-Dart on-device RAG for Flutter and Dart. Chunk, embed and search text, then build grounded LLM prompts, fully offline.
+version: 0.2.1
 homepage: https://github.com/guru-prasath-j/on_device_rag
 repository: https://github.com/guru-prasath-j/on_device_rag
 issue_tracker: https://github.com/guru-prasath-j/on_device_rag/issues

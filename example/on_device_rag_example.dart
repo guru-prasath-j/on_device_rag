@@ -3,6 +3,7 @@
 //   multi_document_example.dart   several documents, filtering, removal
 //   streaming_example.dart        stream tokens as they arrive
 //   custom_chunking_example.dart  chunk size, overlap, topK and diversity
+//   llm_adapter_example.dart      plug in any LLM client with one line
 
 import 'package:on_device_rag/on_device_rag.dart';
 

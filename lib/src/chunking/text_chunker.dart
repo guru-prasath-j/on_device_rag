@@ -8,6 +8,11 @@
 /// With [splitOnBoundaries] (the default) chunks end at a sentence end or,
 /// failing that, a word break, and the overlap starts on a word, so no chunk
 /// begins or ends mid-word.
+///
+/// With [preserveParagraphs], paragraphs (separated by blank lines) are kept
+/// whole and packed together up to [chunkSize]; only paragraphs longer than
+/// [chunkSize] are split. This keeps headings, list items and Markdown
+/// sections intact, which usually retrieves better for structured documents.
 class TextChunker {
   /// Creates a chunker.
   ///
@@ -18,6 +23,7 @@ class TextChunker {
     this.chunkSize = 600,
     this.overlap = 100,
     this.splitOnBoundaries = true,
+    this.preserveParagraphs = false,
   })  : assert(chunkSize > 0, 'chunkSize must be positive'),
         assert(
           overlap >= 0 && overlap < chunkSize,
@@ -34,14 +40,54 @@ class TextChunker {
   /// [chunkSize] characters.
   final bool splitOnBoundaries;
 
+  /// Whether to keep paragraphs (text separated by a blank line) together,
+  /// joining packed paragraphs with a blank line. Paragraph-packed chunks do
+  /// not overlap; [overlap] still applies inside oversized paragraphs.
+  final bool preserveParagraphs;
+
   static final RegExp _whitespace = RegExp(r'\s+');
+  static final RegExp _paragraphBreak = RegExp(r'\n\s*\n');
 
   /// Splits [text] into chunks, collapsing runs of whitespace first.
   ///
   /// Returns an empty list for blank input, and a single chunk when the
   /// cleaned text already fits within [chunkSize]. Every chunk is at most
   /// [chunkSize] characters long.
+  ///
+  /// With [preserveParagraphs], whitespace is collapsed within each paragraph
+  /// and paragraphs are separated by a blank line.
   List<String> chunk(String text) {
+    if (preserveParagraphs) return _chunkParagraphs(text);
+    return _chunkFlat(text);
+  }
+
+  List<String> _chunkParagraphs(String text) {
+    final chunks = <String>[];
+    final buffer = StringBuffer();
+    for (final raw in text.split(_paragraphBreak)) {
+      final paragraph = raw.replaceAll(_whitespace, ' ').trim();
+      if (paragraph.isEmpty) continue;
+      if (paragraph.length > chunkSize) {
+        if (buffer.isNotEmpty) {
+          chunks.add(buffer.toString());
+          buffer.clear();
+        }
+        chunks.addAll(_chunkFlat(paragraph));
+        continue;
+      }
+      final joined = buffer.length + 2 + paragraph.length;
+      if (buffer.isNotEmpty && joined > chunkSize) {
+        chunks.add(buffer.toString());
+        buffer.clear();
+      }
+      if (buffer.isNotEmpty) buffer.write('\n\n');
+      buffer.write(paragraph);
+    }
+    if (buffer.isNotEmpty) chunks.add(buffer.toString());
+    return chunks;
+  }
+
+  List<String> _chunkFlat(String text) {
     final clean = text.replaceAll(_whitespace, ' ').trim();
     if (clean.isEmpty) return const [];
     if (clean.length <= chunkSize) return [clean];

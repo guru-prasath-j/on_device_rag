@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.2.1
+
+### Added
+* `TextChunker(preserveParagraphs: true)`: keeps paragraphs separated by
+  blank lines whole (headings, list items, Markdown sections) and packs them
+  up to `chunkSize`; only oversized paragraphs are split. Off by default, so
+  existing indexes chunk exactly as before.
+* `FunctionLanguageModel` and `FunctionLanguageModel.fromFuture`: adapt any
+  LLM client (on-device runtime, SDK or HTTP API) with one line instead of a
+  `LanguageModel` class.
+* `example/llm_adapter_example.dart`.
+
+### Changed
+* Shorter pubspec description, within pub.dev's 60 to 180 character range.
+
 ## 0.2.0
 
 The README examples now run as written: the engine gained the convenience API

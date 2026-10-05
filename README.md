@@ -129,6 +129,28 @@ final engine = RagEngine(
 final result = await engine.query('Summarise the options', diversity: 0.3);
 ```
 
+Structured documents (Markdown, FAQs, notes) usually retrieve better when
+paragraphs stay whole:
+
+```dart
+const chunker = TextChunker(chunkSize: 500, preserveParagraphs: true);
+```
+
+### Plugging in an LLM
+
+Any client that turns a prompt into text works, with no adapter class:
+
+```dart
+final engine = RagEngine(
+  // Returns the whole answer at once:
+  languageModel: FunctionLanguageModel.fromFuture(client.complete),
+  // Or, for clients that stream tokens:
+  // languageModel: FunctionLanguageModel((prompt) => client.stream(prompt)),
+);
+```
+
+See `example/llm_adapter_example.dart`.
+
 ### Semantic embeddings
 
 `HashingEmbeddingModel` is lexical: it matches shared words, not meaning. For

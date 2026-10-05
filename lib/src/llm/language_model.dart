@@ -11,3 +11,32 @@ abstract interface class LanguageModel {
   /// event.
   Stream<String> generate(String prompt);
 }
+
+/// Adapts a plain function to [LanguageModel], so any on-device runtime, SDK
+/// or HTTP client can power the engine without writing a class.
+///
+/// ```dart
+/// final engine = RagEngine(
+///   languageModel: FunctionLanguageModel.fromFuture(
+///     (prompt) => myClient.complete(prompt),
+///   ),
+/// );
+/// ```
+class FunctionLanguageModel implements LanguageModel {
+  /// Wraps a function that streams the answer for a prompt.
+  const FunctionLanguageModel(this._generate);
+
+  /// Wraps a function that returns the whole answer at once. The answer is
+  /// emitted as a single stream event.
+  factory FunctionLanguageModel.fromFuture(
+    Future<String> Function(String prompt) complete,
+  ) {
+    Stream<String> run(String p) => Stream.fromFuture(complete(p));
+    return FunctionLanguageModel(run);
+  }
+
+  final Stream<String> Function(String prompt) _generate;
+
+  @override
+  Stream<String> generate(String prompt) => _generate(prompt);
+}
